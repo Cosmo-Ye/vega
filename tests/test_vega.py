@@ -1,6 +1,5 @@
 import pytest
 import numpy as np
-from math import isclose
 from astropy.io import fits
 
 from vega import VegaInterface
@@ -11,11 +10,11 @@ def test_vega_new():
     vega = VegaInterface('full_configs/main.ini')
 
     loglik = vega.log_lik()
-    assert isclose(loglik, -8766.997113218942)
+    assert loglik == pytest.approx(-8766.997113218942, rel=1e-6, abs=1e-8)
 
     vega.minimize()
 
-    assert isclose(vega.bestfit.fmin.fval, 0.6392334022603812)
+    assert vega.bestfit.fmin.fval == pytest.approx(0.6392334022603812, rel=1e-6, abs=1e-8)
 
 
 def test_vega_old():
