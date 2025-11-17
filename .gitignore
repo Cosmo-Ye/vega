@@ -103,3 +103,7 @@ ENV/
 
 # IDE settings
 .vscode/
+
+# Worklog outputs
+worklog/logs/
+worklog/attachments/

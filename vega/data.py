@@ -248,9 +248,23 @@ class Data:
 
         if dmat_path is None:
             if 'DM_BLIND' in hdul[1].columns.names:
-                self._distortion_mat = csr_matrix(hdul[1].data['DM_BLIND'])
+                dm_col = hdul[1].data['DM_BLIND']
+                dm_arr = np.asarray(dm_col)
+                if dm_arr.dtype == np.dtype('O'):
+                    dm_arr = np.vstack(dm_arr)
+                if dm_arr.dtype.byteorder not in ('=', '|'):
+                    dm_arr = dm_arr.byteswap().view(dm_arr.dtype.newbyteorder('='))
+                dm_arr = dm_arr.astype(np.float64, copy=False)
+                self._distortion_mat = csr_matrix(dm_arr)
             elif 'DM' in hdul[1].columns.names:
-                self._distortion_mat = csr_matrix(hdul[1].data['DM'])
+                dm_col = hdul[1].data['DM']
+                dm_arr = np.asarray(dm_col)
+                if dm_arr.dtype == np.dtype('O'):
+                    dm_arr = np.vstack(dm_arr)
+                if dm_arr.dtype.byteorder not in ('=', '|'):
+                    dm_arr = dm_arr.byteswap().view(dm_arr.dtype.newbyteorder('='))
+                dm_arr = dm_arr.astype(np.float64, copy=False)
+                self._distortion_mat = csr_matrix(dm_arr)
 
         # Read the covariance matrix
         if not self.corr_item.low_mem_mode:
@@ -346,9 +360,19 @@ class Data:
             self._check_if_blinding_matches(header['BLINDING'], dmat_path)
 
         if 'DM' in hdul[1].columns.names:
-            self._distortion_mat = csr_matrix(hdul[1].data['DM'])
+            dm_arr = np.asarray(hdul[1].data['DM'])
+            if dm_arr.dtype == np.dtype('O'):
+                dm_arr = np.vstack(dm_arr)
+            if dm_arr.dtype.byteorder not in ('=', '|'):
+                dm_arr = dm_arr.byteswap().view(dm_arr.dtype.newbyteorder('='))
+            self._distortion_mat = csr_matrix(dm_arr.astype(np.float64, copy=False))
         elif 'DM_BLIND' in hdul[1].columns.names:
-            self._distortion_mat = csr_matrix(hdul[1].data['DM_BLIND'])
+            dm_arr = np.asarray(hdul[1].data['DM_BLIND'])
+            if dm_arr.dtype == np.dtype('O'):
+                dm_arr = np.vstack(dm_arr)
+            if dm_arr.dtype.byteorder not in ('=', '|'):
+                dm_arr = dm_arr.byteswap().view(dm_arr.dtype.newbyteorder('='))
+            self._distortion_mat = csr_matrix(dm_arr.astype(np.float64, copy=False))
         else:
             raise ValueError('No DM or DM_BLIND column found in distortion matrix file.')
 
@@ -514,39 +538,57 @@ class Data:
             return True
 
     def _read_metal_correlation(self, metal_hdul, tracers, name, dm_prefix):
-        """Read a metal correlation from the metal file and add
-        the data to the existing member dictionaries.
-
-        Parameters
-        ----------
-        metal_hdul : hduList
-            hduList object for the metal file
-        tracers : tuple
-            Tuple with the names of the two tracers
-        name : string
-            The name of the specific correlation to be read from file
-        """
-        self.metal_coordinates[tracers] = Coordinates(
-            metal_hdul[1].header['RPMIN'], metal_hdul[1].header['RPMAX'],
-            metal_hdul[1].header['RTMAX'], metal_hdul[1].header['NP'], metal_hdul[1].header['NT'],
-            rp_grid=metal_hdul[2].data['RP_' + name],
-            rt_grid=metal_hdul[2].data['RT_' + name],
-            z_grid=metal_hdul[2].data['Z_' + name]
-        )
-
-        metal_mat_size = self.metal_coordinates[tracers].rp_grid.size
-
         dm_name = dm_prefix + name
-        if dm_name in metal_hdul[2].columns.names:
-            self.metal_mats[tracers] = csr_matrix(metal_hdul[2].data[dm_name])
-        elif len(metal_hdul) > 3 and dm_name in metal_hdul[3].columns.names:
-            self.metal_mats[tracers] = csr_matrix(metal_hdul[3].data[dm_name])
-        elif self.corr_item.test_flag:
-            self.metal_mats[tracers] = sparse.eye(metal_mat_size)
-        else:
-            raise ValueError("Cannot find correct metal matrices."
-                             " Check that blinding is consistent between cf and metal files.")
 
+        def _to_native_float64_matrix(arr):
+            a = np.asarray(arr)
+            if a.dtype == np.dtype('O'):
+                a = np.vstack(a)
+            if a.dtype.byteorder not in ('=', '|'):
+                a = a.byteswap().view(a.dtype.newbyteorder('='))
+            return a.astype(np.float64, copy=False)
+
+        def _to_native_float64_vector(arr):
+            a = np.asarray(arr)
+            if a.dtype.byteorder not in ('=', '|'):
+                a = a.byteswap().view(a.dtype.newbyteorder('='))
+            return a.astype(np.float64, copy=False)
+
+        # Choose HDU containing columns for this correlation
+        hdu = None
+        if dm_name in metal_hdul[2].columns.names:
+            hdu = metal_hdul[2]
+            self.metal_mats[tracers] = csr_matrix(_to_native_float64_matrix(hdu.data[dm_name]))
+        elif len(metal_hdul) > 3 and dm_name in metal_hdul[3].columns.names:
+            hdu = metal_hdul[3]
+            self.metal_mats[tracers] = csr_matrix(_to_native_float64_matrix(hdu.data[dm_name]))
+        elif self.corr_item.test_flag:
+            # Fallback: identity matrix and use model coordinates for the grids
+            self.metal_mats[tracers] = csr_matrix(np.eye(self.full_data_size))
+            self.metal_coordinates[tracers] = Coordinates.init_from_grids(
+                self.corr_item.model_coordinates,
+                self.corr_item.model_coordinates.rp_grid,
+                self.corr_item.model_coordinates.rt_grid,
+                self.corr_item.model_coordinates.z_grid
+            )
+            return
+        else:
+            raise ValueError("Cannot find correct metal matrices. Check that blinding is consistent between cf and metal files.")
+
+        # Read rp/rt/z grids for this correlation from the same HDU
+        rp_col = 'RP_' + name
+        rt_col = 'RT_' + name
+        z_col = 'Z_' + name
+
+        # Some files may miss Z_; in that case fall back to model z_grid
+        rp_grid = _to_native_float64_vector(hdu.data[rp_col]) if rp_col in hdu.columns.names else self.corr_item.model_coordinates.rp_grid
+        rt_grid = _to_native_float64_vector(hdu.data[rt_col]) if rt_col in hdu.columns.names else self.corr_item.model_coordinates.rt_grid
+        z_grid = _to_native_float64_vector(hdu.data[z_col]) if z_col in hdu.columns.names else self.corr_item.model_coordinates.z_grid
+
+        # Save coordinates for metals
+        self.metal_coordinates[tracers] = Coordinates.init_from_grids(
+            self.corr_item.model_coordinates, rp_grid, rt_grid, z_grid
+        )
     def create_monte_carlo(self, fiducial_model, scale=None, seed=None, forecast=False):
         """Create monte carlo mock of data using a fiducial model.
 

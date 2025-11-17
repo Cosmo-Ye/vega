@@ -42,7 +42,7 @@ class VegaInterface:
             Path to main.ini config file
         """
         # Read the main config file
-        self.main_config = configparser.ConfigParser()
+        self.main_config = configparser.ConfigParser(inline_comment_prefixes=('#', ';'))
         self.main_config.optionxform = lambda option: option
         self.main_config.read(utils.find_file(main_path))
 
@@ -64,7 +64,7 @@ class VegaInterface:
         # Initialize the individual components
         self.corr_items = {}
         for path in ini_files:
-            config = configparser.ConfigParser()
+            config = configparser.ConfigParser(inline_comment_prefixes=('#', ';'))
             config.optionxform = lambda option: option
             config.read(utils.find_file(os.path.expandvars(path)))
 
