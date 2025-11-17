@@ -106,4 +106,4 @@ ENV/
 
 # Worklog outputs
 worklog/logs/
-worklog/attachments/
+# worklog/attachments/
