@@ -165,3 +165,149 @@ This package is based on picca fitter2 found here: https://github.com/igmhub/pic
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _`audreyr/cookiecutter-pypackage`: https://github.com/audreyr/cookiecutter-pypackage
+
+Local Tutorial
+--------------
+
+This section provides a quick local tutorial for Vega, including the purpose of the top-level additions and the local/server workflow, how to use the worklog system, and the new PolyChord analysis functionality with runnable commands.
+
+Top-level additions and local/server workflow
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- `upload.sh`: sync the current repository to the server, excluding `.git`, `__pycache__`, `.ipynb_checkpoints`, and `worklog/`.
+
+  Usage:
+
+  .. code-block:: console
+
+      $ bash upload.sh
+
+  Notes: the default remote is `yifan_sirius:/home/zhuxing/vega/`. It is recommended to define an SSH host alias in your local `~/.ssh/config`:
+
+  .. code-block:: ini
+
+      Host yifan_sirius
+        HostName <your-server-host>
+        User <your-username>
+        IdentityFile ~/.ssh/<your-private-key>
+
+  To change the destination or host, edit the last line of `upload.sh`.
+
+- `download.sh`: download results from the server to a local directory and automatically generate `.ecsv` files for newly downloaded `.fits` files (for quick preview/processing).
+
+  Usage:
+
+  .. code-block:: console
+
+      $ bash download.sh
+
+  Notes: the script defaults to local `DEST=/Users/zhengyifan/vega_result` and remote `yifan_sirius:/work/zhuxing/vega_result/`. You can change `DEST` or the remote path at the top of the script. It will:
+
+  - Sync result files incrementally with `rsync -av`;
+  - Detect newly added `.fits` files in this run;
+  - Convert each new `.fits` into `.ecsv` using `astropy` from the 3rd HDU table (`hdul[2].data`).
+
+- `test_for_lyacor.pbs`: a minimal PBS job script to start Vega with a single process (no MPI).
+
+  Submit and monitor:
+
+  .. code-block:: console
+
+      $ qsub test_for_lyacor.pbs
+      $ qstat
+      $ qdel <job_id>
+
+  What it runs: the script loads the `python3/3.11` module, activates the `vega` conda environment, and then executes:
+
+  .. code-block:: console
+
+      $ python bin/run_vega.py main.ini
+
+- `run_vega_mpi.pbs`: MPI PBS script; the example uses `mpirun -np 32` and loads `gnu9` and `mpich` modules according to the queue environment.
+
+  Submit and monitor:
+
+  .. code-block:: console
+
+      $ qsub run_vega_mpi.pbs
+      $ qstat
+      $ qdel <job_id>
+
+  What it runs:
+
+  .. code-block:: console
+
+      $ mpirun -np 32 python bin/run_vega_mpi.py main.ini
+
+- `main.ini`: the main Vega configuration file controlling data, model, and fit-level global parameters.
+
+- `lyalyaxlyalya.ini`, `lyalyaxlyalyb.ini`: example correlation config files (for Lya(Lya)-Lya(Lya) and Lya(Lya)-Lya(Lyb), respectively). In practice, reference them from `main.ini` or replace with your dataset/correlation configs.
+
+
+Worklog system
+^^^^^^^^^^^^^^
+
+The `worklog/` directory records daily work, dependency changes, and run commands, enabling reproducibility and collaboration. It provides a template and examples:
+
+- Template: `worklog/worklog-template.md`
+- Examples: `worklog/2025-11-14.md`, `worklog/2025-11-17.md`
+- Attachments dir: `worklog/attachments/` (store outputs, screenshots, and log snippets)
+
+Recommended usage:
+
+.. code-block:: console
+
+    # Create today’s log (copy the template and rename to today’s date)
+    $ cp worklog/worklog-template.md worklog/$(date +%F).md
+
+    # Stream run output into the log (example)
+    $ python bin/run_vega.py main.ini 2>&1 | tee -a worklog/$(date +%F).md
+
+    # Save attachments (e.g., key outputs/figures)
+    $ mkdir -p worklog/attachments
+    $ cp path/to/output.png worklog/attachments/
+
+    # Optionally sync to remote or commit to VCS
+    $ git add worklog
+    $ git commit -m "Worklog: $(date +%F)"
+    $ git push
+
+Each entry is recommended to include: environment info (Python/NumPy/SciPy/architecture), run commands, key outputs, issues/changes, and next steps.
+
+
+PolyChord analysis
+^^^^^^^^^^^^^^^^^^
+
+The new script `bin/analyze_polychord.py` post-processes PolyChord sampling results and compiles statistics.
+
+- Key features:
+
+  - Uses the weighted mean as the central value (`mean`);
+  - Exports two types of 1σ errors relative to the mean:
+    - Equal-tailed 1σ (`err_minus_1sigma`, `err_plus_1sigma`), defined by `q16/q84` relative to the mean;
+    - HPD 1σ (`err_minus_hpd_1sigma`, `err_plus_hpd_1sigma`), defined by the shortest 68% probability-mass interval endpoints relative to the mean;
+  - Retains and exports common statistics for comparison: `std`, `median`, `q16/q84/q025/q975`, and HPD 68%/95% interval endpoints;
+  - Exports evidence statistics (`logZ`, `logZerr`) and information gain `H`.
+
+- Typical usage:
+
+  .. code-block:: console
+
+      # Basic analysis (specify the PolyChord output root and prefix)
+      $ python bin/analyze_polychord.py \
+          --root /Users/zhengyifan/vega_result \
+          --prefix lyaxlya_lyaxlyb_s1
+
+      # Produce summary plots (e.g., triangle/marginals, if supported)
+      $ python bin/analyze_polychord.py \
+          --root /Users/zhengyifan/vega_result \
+          --prefix lyaxlya_lyaxlyb_s1 \
+          --plot
+
+- Outputs (written to the results or current directory):
+
+  - Parameter statistics CSV: central values (mean) plus equal-tailed/HPD 1σ errors for easy reporting;
+  - Evidence and information summaries: for model comparison (Bayes factors, Jeffreys scale);
+  - Optional figures: marginals/correlation plots showing non-Gaussianity and parameter couplings.
+
+Note: On Apple Silicon (arm64), ensure binary packages like `numpy/scipy/numba` share the same architecture; prefer `conda-forge` or this repository’s `environment.yml` to create a native arm64 environment before running the commands above.
