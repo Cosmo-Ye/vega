@@ -161,6 +161,15 @@ class PowerSpectrum:
                 raise ValueError('"velocity dispersion" must be of type'
                                  ' "gauss" or "lorentz".')
 
+        # add reionization
+        if 'reionization' in self._config:
+            reionization_model = self._config.get('reionization')
+            if reionization_model == 'yukawa':
+                p_mpsi = self.compute_reionization_yukawa(params, pk_lin)
+                pk_re = p_mpsi * self.complete_reionization(bias1, beta1, params)
+                pk_re *= self.pk_Gk
+                pk_full += pk_re
+
         return pk_full
 
     def compute_kaiser(self, bias1, beta1, bias2, beta2, fast_metals=False):
@@ -546,3 +555,66 @@ class PowerSpectrum:
             smoothing *= 1. / np.sqrt(1 + (self.k_par_grid * sigma)**2)
 
         return smoothing
+
+    def compute_reionization_yukawa(self, params, pk_lin):
+        """Compute the reionization effect using the Yukawa model.
+
+        Parameters
+        ----------
+        params : dict
+            Computation parameters
+
+        Returns
+        -------
+        ND Array
+            Cross power spectrum between matter and transparency
+        """
+        
+        p_mpsi = np.zeros_like(self.k_grid)
+        h = 0.6736
+        k_min = 0.06 # 1/Mpc
+        k_max = 0.4 # 1/Mpc
+        
+        yuk_A = params['yuk_A']
+        yuk_alpha = params['yuk_alpha']
+        yuk_beta = params['yuk_beta']
+
+        thresh = k_min / h
+        mask = self.k_grid >= thresh
+        idxs = np.flatnonzero(mask)
+        i = idxs[np.argmin(self.k_grid[idxs])]
+
+        k_i = self.k_grid[i]
+        pk_lin_min = pk_lin[i]
+        p_mpsi_min = -yuk_A * h**3 * np.exp(-yuk_alpha * k_i * h) * (k_i * h)**(-yuk_beta)
+
+        p_mpsi[(self.k_grid >= k_max / h)] = 0
+        mid = (self.k_grid < k_max / h) & (self.k_grid > k_min / h)
+        p_mpsi[mid] = -yuk_A * h**3 * np.exp(-yuk_alpha * self.k_grid[mid] * h) * (self.k_grid[mid] * h)**(-yuk_beta)
+        low = (self.k_grid <= k_min / h)
+        if pk_lin_min == 0:
+            p_mpsi[low] = 0
+        else:
+            p_mpsi[low] = p_mpsi_min * (pk_lin[low] / pk_lin_min)
+        
+        return p_mpsi
+
+    def complete_reionization(self, bias1, beta1, params):
+        """Complete the reionization effect.
+
+        Parameters
+        ----------
+        bias1 : float
+            Effective bias of the first tracer
+        beta1 : float
+            Effective beta of the first tracer
+
+        Returns
+        -------
+        ND Array
+            Complete reionization term
+        """
+        pk = (1 + beta1 * self.muk_grid**2)
+        pk *= 2 * bias1 * params['b_gamma']
+        
+        return pk
