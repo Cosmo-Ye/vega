@@ -168,8 +168,9 @@ class PowerSpectrum:
                 reionization_model = self._config.get('reionization')
                 if reionization_model == 'yukawa':
                     # p_mpsi = self.compute_reionization_yukawa(params, pk_lin)
-                    p_mpsi = self.compute_reionization_yukawa(params, self._pk_fid)
-                    print("let's see pk_lin[340]:", pk_lin[340])
+                    # p_mpsi = self.compute_reionization_yukawa(params, self._pk_fid)
+                    p_mpsi = self.compute_reionization_yukawa(params)
+                    # print("let's see pk_lin[340]:", pk_lin[340])
                     # np.savetxt('p_mpsi.txt', p_mpsi)
                     # np.savetxt('k.txt', self.k_grid)
                     # np.savetxt('pk_lin.txt', pk_lin)
@@ -566,7 +567,7 @@ class PowerSpectrum:
 
         return smoothing
 
-    def compute_reionization_yukawa(self, params, pk_lin):
+    def compute_reionization_yukawa(self, params):
         """Compute the reionization effect using the Yukawa model.
 
         Parameters
@@ -596,10 +597,11 @@ class PowerSpectrum:
         print("i is:", i)
 
         k_i = self.k_grid[i]
-        pk_lin_min = pk_lin[i]
+        #pk_lin_min = pk_lin[i]
+        pk_fid_min = self._pk_fid[i]
         # pk_lin_min = 1029.991067047 
         p_mpsi_min = -yuk_A * h**3 * np.exp(-yuk_alpha * k_i * h) * (k_i * h)**(-yuk_beta)
-        print("pk_lin_min is:", pk_lin_min)
+        print("pk_fid_min is:", pk_fid_min)
         print("p_mpsi_min is:", p_mpsi_min)
 
         p_mpsi[(self.k_grid >= k_max / h)] = 0
@@ -608,10 +610,11 @@ class PowerSpectrum:
         p_mpsi[mid] = -yuk_A * h**3 * np.exp(-yuk_alpha * self.k_grid[mid] * h) * (self.k_grid[mid] * h)**(-yuk_beta)
         low = (self.k_grid <= k_min / h)
         # print("low is:", low)
-        if pk_lin_min == 0:
+        if pk_fid_min == 0:
             p_mpsi[low] = 0
         else:
-            p_mpsi[low] = p_mpsi_min * (pk_lin[low] / pk_lin_min)
+            #p_mpsi[low] = p_mpsi_min * (pk_lin[low] / pk_lin_min)
+            p_mpsi[low] = p_mpsi_min * (self._pk_fid[low] / pk_fid_min)
         
         return p_mpsi
 
@@ -634,3 +637,4 @@ class PowerSpectrum:
         pk *= 2 * bias2 * params['b_gamma']
         
         return pk
+
