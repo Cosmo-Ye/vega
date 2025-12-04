@@ -164,18 +164,14 @@ class PowerSpectrum:
 
         # add reionization
         if 'reionization' in self._config:
-            if self.tracer1_name == 'LYA' or self.tracer2_name == 'LYA':
+            if self.tracer1_name == 'LYA':
                 reionization_model = self._config.get('reionization')
                 if reionization_model == 'yukawa':
-                    # p_mpsi = self.compute_reionization_yukawa(params, pk_lin)
-                    # p_mpsi = self.compute_reionization_yukawa(params, self._pk_fid)
                     p_mpsi = self.compute_reionization_yukawa(params)
-                    # print("let's see pk_lin[340]:", pk_lin[340])
-                    # np.savetxt('p_mpsi.txt', p_mpsi)
-                    # np.savetxt('k.txt', self.k_grid)
-                    # np.savetxt('pk_lin.txt', pk_lin)
-                    # sys.exit()
-                    pk_re = p_mpsi * self.complete_reionization(bias2, beta2, params)
+                    if self.tracer2_name == 'LYA':
+                        pk_re = p_mpsi * self.complete_reionization(bias2, beta2, params)
+                    else:
+                        pk_re = p_mpsi * self.complete_reionization_cross(bias2, beta2, params)
                     pk_re *= self.pk_Gk
                     if params['peak']:
                         pk_re *= self.compute_peak_nl(params)
@@ -594,26 +590,18 @@ class PowerSpectrum:
         mask = self.k_grid >= thresh
         idxs = np.flatnonzero(mask)
         i = idxs[np.argmin(self.k_grid[idxs])]
-        print("i is:", i)
 
         k_i = self.k_grid[i]
-        #pk_lin_min = pk_lin[i]
         pk_fid_min = self._pk_fid[i]
-        # pk_lin_min = 1029.991067047 
         p_mpsi_min = -yuk_A * h**3 * np.exp(-yuk_alpha * k_i * h) * (k_i * h)**(-yuk_beta)
-        print("pk_fid_min is:", pk_fid_min)
-        print("p_mpsi_min is:", p_mpsi_min)
 
         p_mpsi[(self.k_grid >= k_max / h)] = 0
         mid = (self.k_grid < k_max / h) & (self.k_grid > k_min / h)
-        # print("mid is:", mid)
         p_mpsi[mid] = -yuk_A * h**3 * np.exp(-yuk_alpha * self.k_grid[mid] * h) * (self.k_grid[mid] * h)**(-yuk_beta)
         low = (self.k_grid <= k_min / h)
-        # print("low is:", low)
         if pk_fid_min == 0:
             p_mpsi[low] = 0
         else:
-            #p_mpsi[low] = p_mpsi_min * (pk_lin[low] / pk_lin_min)
             p_mpsi[low] = p_mpsi_min * (self._pk_fid[low] / pk_fid_min)
         
         return p_mpsi
@@ -638,3 +626,22 @@ class PowerSpectrum:
         
         return pk
 
+    def complete_reionization_cross(self, bias2, beta2, params):
+        """Complete the reionization effect.
+
+        Parameters
+        ----------
+        bias2 : float
+            Effective bias of the second tracer
+        beta2 : float
+            Effective beta of the second tracer
+
+        Returns
+        -------
+        ND Array
+            Complete reionization term
+        """
+        pk = (1 + beta2 * self.muk_grid**2)
+        pk *= bias2 * params['b_gamma']
+        
+        return pk
