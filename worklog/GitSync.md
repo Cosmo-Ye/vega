@@ -65,6 +65,7 @@
 - `HEAD detached at <tag/commit>`（分离的 HEAD）
   - 现象：`git branch --show-current` 无分支名，提交不在任何分支上。
   - 修复：`git switch -c <branch>`，提交并推送到该分支。
+重启后加载密钥：eval "$(ssh-agent -s)"； 然后 `ssh-add --apple-use-keychain ~/.ssh/id_ed25519_github`。
 
 ## 工作日志提交示例（本仓库）
 - 提交工作日志与相关脚本：

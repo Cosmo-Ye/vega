@@ -1,0 +1,22 @@
+#PBS -N Polychord_lyalyb
+#PBS -V 
+#PBS -l select=1:ncpus=64:mem=512gb
+#PBS -j oe
+
+cd $PBS_O_WORKDIR
+
+# module purge
+# module load python3/3.11
+# module load gnu9
+# module load mpich
+
+
+source ~/.bashrc
+conda activate vega
+
+# module purge
+# module load python3/3.11
+module load gnu9
+module load mpich
+
+mpirun -np 64 python bin/run_vega_mpi.py main.ini
