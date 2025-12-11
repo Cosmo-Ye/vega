@@ -167,9 +167,10 @@ class PowerSpectrum:
             if self.tracer1_name == 'LYA':
                 reionization_model = self._config.get('reionization')
                 if reionization_model == 'yukawa':
-                    p_mpsi = self.compute_reionization_yukawa(params)
                     if 'new p_mpsi' in self._config and self._config.getboolean('new p_mpsi'):
-                        p_mpsi *= self.new_pmpsi(params)
+                        p_mpsi = self.compute_reionization_yukawa_new(params)
+                    else:
+                        p_mpsi = self.compute_reionization_yukawa(params)
                     if self.tracer2_name == 'LYA':
                         pk_re = p_mpsi * self.complete_reionization(bias2, beta2, params)
                     else:
@@ -648,8 +649,8 @@ class PowerSpectrum:
         
         return pk
 
-    def new_pmpsi(self, params):
-        """Compute the new p_mpsi form.
+    def compute_reionization_yukawa_new(self, params):
+        """Compute the reionization effect using the Yukawa model. Then add the new term to get P_mpsi = Yukawa(k)*G(k).
 
         Parameters
         ----------
@@ -659,14 +660,38 @@ class PowerSpectrum:
         Returns
         -------
         ND Array
-            New p_mpsi correction term
+            Cross power spectrum between matter and transparency times G(k)
         """
+        
+        p_mpsi = np.zeros_like(self.k_grid)
+        h = 0.6736
+        k_min = 0.06 # 1/Mpc
+        k_max = 0.4 # 1/Mpc
+        
+        yuk_A = params['yuk_A']
+        yuk_alpha = params['yuk_alpha']
+        yuk_beta = params['yuk_beta']
+
         c1 = params['c1']
         c2 = params['c2']
         c3 = params['c3']
-        h = 0.6736
 
-        G_knew = np.exp(-c1 * (self.k_grid * h - c2)) + c3
+        thresh = k_min / h
+        mask = self.k_grid >= thresh
+        idxs = np.flatnonzero(mask)
+        i = idxs[np.argmin(self.k_grid[idxs])]
 
-        return G_knew
+        k_i = self.k_grid[i]
+        pk_fid_min = self._pk_fid[i]
+        p_mpsi_min = (-yuk_A * h**3 * np.exp(-yuk_alpha * k_i * h) * (k_i * h)**(-yuk_beta)) * (np.exp(-c1 * (k_i * h - c2)) + c3)
 
+        p_mpsi[(self.k_grid >= k_max / h)] = 0
+        mid = (self.k_grid < k_max / h) & (self.k_grid > k_min / h)
+        p_mpsi[mid] = (-yuk_A * h**3 * np.exp(-yuk_alpha * self.k_grid[mid] * h) * (self.k_grid[mid] * h)**(-yuk_beta)) * (np.exp(-c1 * (self.k_grid[mid] * h - c2)) + c3)
+        low = (self.k_grid <= k_min / h)
+        if pk_fid_min == 0:
+            p_mpsi[low] = 0
+        else:
+            p_mpsi[low] = p_mpsi_min * (self._pk_fid[low] / pk_fid_min)
+        
+        return p_mpsi
