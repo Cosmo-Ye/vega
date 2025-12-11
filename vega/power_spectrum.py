@@ -168,6 +168,8 @@ class PowerSpectrum:
                 reionization_model = self._config.get('reionization')
                 if reionization_model == 'yukawa':
                     p_mpsi = self.compute_reionization_yukawa(params)
+                    if 'new p_mpsi' in self.config and self.config.getboolean('new p_mpsi'):
+                        p_mpsi *= self.new_pmpsi(params)
                     if self.tracer2_name == 'LYA':
                         pk_re = p_mpsi * self.complete_reionization(bias2, beta2, params)
                     else:
@@ -645,3 +647,26 @@ class PowerSpectrum:
         pk *= bias2 * params['b_gamma']
         
         return pk
+
+    def new_pmpsi(self, params):
+        """Compute the new p_mpsi form.
+
+        Parameters
+        ----------
+        params : dict
+            Computation parameters
+
+        Returns
+        -------
+        ND Array
+            New p_mpsi correction term
+        """
+        c1 = params['c1']
+        c2 = params['c2']
+        c3 = params['c3']
+        h = 0.6736
+
+        G_knew = np.exp(-c1 * (self.k_grid * h - c2)) + c3
+        
+        return G_knew
+
