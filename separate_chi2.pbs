@@ -1,0 +1,17 @@
+#PBS -N separate_chi2
+#PBS -V 
+#PBS -l select=1:ncpus=32:mem=512gb
+#PBS -j oe
+
+
+# 作业开始后，PBS 将在一个新工作目录运行，通常是 $PBS_O_WORKDIR
+cd "$PBS_O_WORKDIR"
+
+module load python3/3.11
+
+# 加载环境（依你的 Shell 与集群配置）
+source ~/.bashrc
+conda activate vega
+
+# 运行你的处理脚本或 picca 工具
+python analysis/separate_chi2.py
