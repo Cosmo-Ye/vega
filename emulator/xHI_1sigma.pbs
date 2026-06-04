@@ -1,0 +1,15 @@
+#PBS -N xHI_1sigma
+#PBS -V 
+#PBS -l select=1:ncpus=32:mem=512gb
+#PBS -j oe
+
+
+# 作业开始后，PBS 将在一个新工作目录运行，通常是 $PBS_O_WORKDIR
+cd "$PBS_O_WORKDIR"
+
+module load python3/3.11
+
+python mcmc/xhi_band_from_chain.py \
+  --chains mcmc/extlong1.npz mcmc/extlong2.npz mcmc/extlong3.npz mcmc/extlong4.npz \
+  --nprocs 8 --chunk-size 256 \
+  --out-txt mcmc/xhi_extwhole.txt

@@ -1,0 +1,27 @@
+#PBS -N mcmc_pmpsi
+#PBS -V 
+#PBS -l select=1:ncpus=32:mem=512gb
+#PBS -j oe
+
+
+# 作业开始后，PBS 将在一个新工作目录运行，通常是 $PBS_O_WORKDIR
+cd "$PBS_O_WORKDIR"
+
+module load python3/3.11
+
+
+python mcmc/run_mcmc.py \
+  --pmpsi-chain-root mcmc/Polychord_result/full_reio_extendprior/Polychord_fullcombined_extendprior \
+  --ignore-rows 0.2 \
+  --emu-model pmxh_shape_emulator.joblib \
+  --zeta-idx 0 \
+  --tvir-idx 1 \
+  --tvir-sample-log10 \
+  --zeta-min 10 --zeta-max 40 \
+  --logtvir-min 4 --logtvir-max 5 \
+  --z-select 2.33 \
+  --nsteps 2000000 --burn 40000 --thin 1 \
+  --seed 427 \
+  --zeta-init 35 --logtvir-init 4.25 \
+  --zeta-step 1 --logtvir-step 0.01 \
+  --out mcmc/loglong3.npz
