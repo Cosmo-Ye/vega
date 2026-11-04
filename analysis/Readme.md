@@ -31,4 +31,4 @@ python analysis/replot_polychord.py -wedge --chain1 Polychord_result/full_fid_nv
 The figure auto_ratio.png is made by this script. ![auto_ratio.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/analysis/auto_ratio.png)
 
 
-**point_chi2.py** 
+**point_chi2.py** makes similar wedge plot as **replot_polychord.py** does, but it can also shows the most contributing-to-delta_chi^2 points
