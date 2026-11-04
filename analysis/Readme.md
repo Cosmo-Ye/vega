@@ -13,3 +13,7 @@ This folder contains scripts to visualize and analyze the results of Vega for ou
 python analysis/plttria_weight.py /Users/zhengyifan/vega_result/40_180/auto_reio_40_180_3free/Poly_bbt_40_180_auto conservative_yuk
 ```
 
+**replot_from_fits.py** makes the standard wedge plot from the output file of Minimizer, while it can show two different fit results for comparison. Call it with the command `python analysis/replot_from_fits.py -wedge --fit1 /path/to/fit1.fits --fit2 /path/to/fit2.fits --config path/to/ini_file.ini --corr corr_type --plot-rmin n`, for example:
+```
+python analysis/replot_from_fits.py -wedge --fit1 /work/zhuxing/vega_result/0318_fid_auto_20-180.fits --fit2 /work/zhuxing/vega_result/0318_yuk_auto_20-180.fits --config analysis/main_minimizer.ini --corr lyaxlya --plot-rmin 20
+```
