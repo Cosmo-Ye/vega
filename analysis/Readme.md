@@ -28,4 +28,7 @@ python analysis/replot_from_fits.py -wedge --fit1 /work/zhuxing/vega_result/0318
 ```
 python analysis/replot_polychord.py -wedge --chain1 Polychord_result/full_fid_nv --chain2 Polychord_result/full_reio_ep_nv --config1 analysis/main_fid.ini --config2 analysis/main_reio.ini --corr lyaxlya --plot-rmin 10
 ```
+The figure auto_ratio.png is made by this script. ![auto_ratio.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/analysis/auto_ratio.png)
 
+
+**point_chi2.py** 
