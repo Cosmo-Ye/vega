@@ -39,3 +39,6 @@ The figure auto_ratio.png is made by this script. ![auto_ratio.png](https://gith
 python analysis/point_chi2.py --chain-fid Polychord_result/auto_40_fid_bf --chain-reio Polychord_result/auto_40_reio_bf --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr lyaxlya --plot-rmin 40 --plot-rmax 180 --top-k 6 --use-mean --zoom
 ```
 It can generate such figure: ![40_lyalya_wedge_top.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/DESI_DR1_reionization/analysis/40_lyalya_wedge_top.png)
+
+
+The ***.ini** files are the configuration files for the scripts in /analysis directory. ***fid.ini** files are for fiducial model without reionization, and ***reio.ini** files are for our reonization model.
