@@ -31,6 +31,9 @@ python analysis/replot_polychord.py -wedge --chain1 Polychord_result/full_fid_nv
 The figure auto_ratio.png is made by this script. ![auto_ratio.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/DESI_DR1_reionization/analysis/auto_ratio.png)
 
 
+**separate_chi2.py** can provide you with the chi^2 in the r-range you're interested in, with the input polychord file and required r-range hard coded. You can easily call it with `python analysis/separate_chi2.py`, but remember also to run it with access to data file.
+
+
 **point_chi2.py** makes similar wedge plot as **replot_polychord.py** does, but it can also show the most contributing-to-delta_chi^2 points with red, and inset to show the contribution of pixels for some of them. It has many arguments to control the inset plots. Call it as the example:
 ```
 python analysis/point_chi2.py --chain-fid Polychord_result/auto_40_fid_bf --chain-reio Polychord_result/auto_40_reio_bf --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr lyaxlya --plot-rmin 40 --plot-rmax 180 --top-k 6 --use-mean --zoom
