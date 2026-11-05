@@ -1,1 +1,25 @@
+# Inference of reionization timeline based on Vega results
 
+This folder contains scripts to run MCMC, build emulators, and do inference.
+
+## Introduction of files
+
+The python scripts in this directory can be devided into 3 parts: train and call emulators, error evaluation and visualization, and run MCMC based on emulators.
+
+### Train and call emulators
+
+**xhi_shape_emulator.py** is the emulator for reionization timeline, i.e. xHI(z). It has 3 different modes. Firstly you need to run `train` mode to train the emulator, with command like this.
+```bash
+python xhi_shape_emulator.py train \
+  --sobol sobol.txt \
+  --xhi-dir train_data/xHI \
+  --optimize-kernel \
+  --out xhi_shape_emulator.joblib
+```
+Check the meaning of sobol.txt and train_data/xHI below. After generating the **xhi_shape_emulator.joblib**, you can call the xHI(z) emulator for prediction. Mode `predict` is for single point prediction, i.e. for a given set of (zeta_UV, Tvir), output the neutral hydrogen fraction xHI at interested redshift z, for example:
+```bash
+python xhi_shape_emulator.py predict \
+  --model xhi_shape_emulator.joblib \
+  --z 12.345 \
+  --params 35.51756401546299458 93822.94044829905033
+```
