@@ -8,7 +8,7 @@ The python scripts in this directory can be devided into 3 parts: train and call
 
 ### Train and call emulators
 
-**xhi_shape_emulator.py** is the emulator for reionization timeline, i.e. xHI(z). It has 3 different modes. Firstly you need to run `train` mode to train the emulator, with command like this.
+**xhi_shape_emulator.py** is the emulator for reionization timeline, i.e. xHI(z). It has 3 different modes. Firstly you need to run `train` mode to train the emulator, with command like this:
 ```bash
 python xhi_shape_emulator.py train \
   --sobol sobol.txt \
@@ -31,3 +31,31 @@ python xhi_shape_emulator.py predict-curve \
   --z-file test_data/xHI/xH_concat_emu_0 \
   --out shape_pred_emu_0.txt
 ```
+
+
+Similarly, **pmxh_shape_emulator.py** is the emulator for matter-neutral hydrogen fraction cross-power spectrum P_m,psi(k, z). `train` mode is the first thing you need to run, with the command:
+```bash
+python pmxh_shape_emulator.py train \
+  --sobol sobol.txt \
+  --cross-dir train_data/cross \
+  --optimize-kernel \
+  --out pmxh_shape_emulator.joblib
+```
+After that you can do prediction for P_m,psi at assigned k and z for a given set of (zeta_UV, Tvir) with `predict` mode:
+```bash
+python pmxh_shape_emulator.py predict \
+  --model pmxh_shape_emulator.joblib \
+  --z 7.08 \
+  --k 0.07542991 \
+  --params 35.51756401546299458 93822.94044829905033
+```
+
+
+
+
+
+
+
+
+
+
