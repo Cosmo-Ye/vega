@@ -55,6 +55,18 @@ In **example_emu**, we show several samples of realization gained by 21cmFAST si
 The train and test dataset are generated with 21cmFAST by Sobol sampling in the parameter space (zeta_UV, Tvir). So you also need a sobol.txt file to record the parameter values following the serial number.
 
 
+### Error evaluation
+
+After training the emulators, you need to test their performance before you further analyze. The most straight way is to show the emulator-predicted results and the true results in the same figure to do the comparison. **compare_xhi_shape_emulator.py** can 
+
+
+
+
+
+
+
+
+
 
 
 
