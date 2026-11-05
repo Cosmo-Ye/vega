@@ -42,3 +42,5 @@ It can generate such figure: ![40_lyalya_wedge_top.png](https://github.com/Cosmo
 
 
 The ***.ini** files are the configuration files for the scripts in /analysis directory. ***fid.ini** files are for fiducial model without reionization, and ***reio.ini** files are for our reonization model.
+
+The directory **map_yuk_to_reio** contains the scripts which transform the values of yukawa template parameters to the power spectrum of reionization. Some other data of reionization power spectrum are stored in this directory, to visually compare different models.
