@@ -28,11 +28,11 @@ python analysis/replot_from_fits.py -wedge --fit1 /work/zhuxing/vega_result/0318
 ```
 python analysis/replot_polychord.py -wedge --chain1 Polychord_result/full_fid_nv --chain2 Polychord_result/full_reio_ep_nv --config1 analysis/main_fid.ini --config2 analysis/main_reio.ini --corr lyaxlya --plot-rmin 10
 ```
-The figure auto_ratio.png is made by this script. ![auto_ratio.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/analysis/auto_ratio.png)
+The figure auto_ratio.png is made by this script. ![auto_ratio.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/DESI_DR1_reionization/analysis/auto_ratio.png)
 
 
 **point_chi2.py** makes similar wedge plot as **replot_polychord.py** does, but it can also show the most contributing-to-delta_chi^2 points with red, and inset to show the contribution of pixels for some of them. It has many arguments to control the inset plots. Call it as the example:
 ```
 python analysis/point_chi2.py --chain-fid Polychord_result/auto_40_fid_bf --chain-reio Polychord_result/auto_40_reio_bf --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr lyaxlya --plot-rmin 40 --plot-rmax 180 --top-k 6 --use-mean --zoom
 ```
-It can generate such figure: ![40_lyalya_wedge_top.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/analysis/40_lyalya_wedge_top.png)
+It can generate such figure: ![40_lyalya_wedge_top.png](https://github.com/Cosmo-Ye/vega/blob/reproduce/DESI_DR1_reionization/analysis/40_lyalya_wedge_top.png)
