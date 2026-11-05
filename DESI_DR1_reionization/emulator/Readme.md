@@ -23,3 +23,11 @@ python xhi_shape_emulator.py predict \
   --z 12.345 \
   --params 35.51756401546299458 93822.94044829905033
 ```
+While `predict-curve` mode can provide you the whole xHI(z) curve for a given set of (zeta_UV, Tvir), the output is assigned on the same z-grid as the z-file you input, call it with:
+```bash
+python xhi_shape_emulator.py predict-curve \
+  --model xhi_shape_emulator.joblib \
+  --params 35.51756401546299458 93822.94044829905033 \
+  --z-file test_data/xHI/xH_concat_emu_0 \
+  --out shape_pred_emu_0.txt
+```
