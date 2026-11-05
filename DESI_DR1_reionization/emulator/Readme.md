@@ -50,6 +50,9 @@ python pmxh_shape_emulator.py predict \
   --params 35.51756401546299458 93822.94044829905033
 ```
 
+In **example_emu**, we show several samples of realization gained by 21cmFAST simulation, which are used as train and test dataset in **emulator** directory. Folder **xHI** contains the example data files of xHI, the first column is the redshift z-grid, and the second column is the neutral hydrogen fraction xHI. The number n in the name **xH_concat_emu_n** represents the serial number. Folder **cross** contains the example data files of P_m,psi(k, z), the first column is the redshift z-grid, the second column is the wavenumber k-grid, and the third column is the matter-neutral hydrogen fraction cross-power spectrum P_m,psi, while you don't need the rest columns.
+
+The train and test dataset are generated with 21cmFAST by Sobol sampling in the parameter space (zeta_UV, Tvir). So you also need a sobol.txt file to record the parameter values following the serial number.
 
 
 
