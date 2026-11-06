@@ -1,0 +1,15 @@
+#PBS -N chi2_20autofid
+#PBS -V 
+#PBS -l select=1:ncpus=32:mem=512gb
+#PBS -j oe
+
+
+cd "$PBS_O_WORKDIR"
+
+module load python3/3.11
+
+
+source ~/.bashrc
+conda activate vega
+
+python analysis/separate_chi2.py
