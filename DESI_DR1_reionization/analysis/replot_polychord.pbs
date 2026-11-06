@@ -4,16 +4,13 @@
 #PBS -j oe
 
 
-# 作业开始后，PBS 将在一个新工作目录运行，通常是 $PBS_O_WORKDIR
 cd "$PBS_O_WORKDIR"
 
 module load python3/3.11
 
-# 加载环境（依你的 Shell 与集群配置）
 source ~/.bashrc
 conda activate vega
 
-# 运行你的处理脚本或 picca 工具
 # python analysis/replot_polychord.py -wedge --chain1 Polychord_result/auto_40_fid_bf --chain2 Polychord_result/auto_40_reio_bf --config1 analysis/main_fid.ini --config2 analysis/main_reio.ini --corr lyaxlya
 # python analysis/replot_polychord.py -wedge --chain1 Polychord_result/auto_40_fid_bf --chain2 Polychord_result/auto_40_reio_bf --config1 analysis/main_fid.ini --config2 analysis/main_reio.ini --corr lyaxlyb
 # python analysis/replot_polychord.py -wedge --chain1 Polychord_result/full_fid_nv --chain2 Polychord_result/full_reio_ep_nv --config1 analysis/main_fid.ini --config2 analysis/main_reio.ini --corr lyaxlya --plot-rmin 10
