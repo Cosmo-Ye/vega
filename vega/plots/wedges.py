@@ -79,7 +79,7 @@ class Wedge:
         self.weights[weights_idx] = counts[positive_idx]
         self.r = self.get_bin_centers(r_bins)
 
-    def __call__(self, data, covariance=None):
+    def __call__(self, data, covariance=None, weights=None):
         """Computes the wedge for the input data and optional covariance
 
         Parameters
@@ -88,6 +88,8 @@ class Wedge:
             Data vector
         covariance : 2D array, optional
             Covariance Matrix, by default None
+        weights : 1D array, optional
+            Weights for each data point (e.g. volume weights), by default None
 
         Returns
         -------
@@ -95,7 +97,9 @@ class Wedge:
             radius, wedge, wedge_covariance (optional)
         """
         # Init covariance
-        if covariance is None:
+        if weights is not None:
+            cov_weight = weights
+        elif covariance is None:
             cov_weight = np.ones(len(data))
         else:
             cov_weight = 1 / np.diagonal(covariance)

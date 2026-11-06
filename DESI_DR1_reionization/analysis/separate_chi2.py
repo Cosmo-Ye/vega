@@ -10,23 +10,28 @@ import copy
 # POLY_TXT = "/home/zhuxing/vega/Polychord_result/full_reio_extendprior/Polychord_fullcombined_extendprior.txt"
 # POLY_PARAMNAMES = "/home/zhuxing/vega/Polychord_result/full_reio_extendprior/Polychord_fullcombined_extendprior.paramnames"
 
-# full combined fid
-MAIN_INI = "/home/zhuxing/vega/analysis/main_fid.ini"
-POLY_TXT = "/home/zhuxing/vega/Polychord_result/full_fid/Polychord_fullcombine_fid.txt"
-POLY_PARAMNAMES = "/home/zhuxing/vega/Polychord_result/full_fid/Polychord_fullcombine_fid.paramnames"
+# # full combined fid
+# MAIN_INI = "/home/zhuxing/vega/analysis/main_fid.ini"
+# POLY_TXT = "/home/zhuxing/vega/Polychord_result/full_fid/Polychord_fullcombine_fid.txt"
+# POLY_PARAMNAMES = "/home/zhuxing/vega/Polychord_result/full_fid/Polychord_fullcombine_fid.paramnames"
 
-## auto fiducial
+# # auto fiducial
 # MAIN_INI = "/home/zhuxing/vega/analysis/main_fid.ini"
 # POLY_TXT = "/home/zhuxing/vega/Polychord_result/auto_fiducial/lyaxlya_lyaxlyb_s3.txt"
 # POLY_PARAMNAMES = "/home/zhuxing/vega/Polychord_result/auto_fiducial/lyaxlya_lyaxlyb_s3.paramnames"
 
-## auto reio
+# # auto reio
 # MAIN_INI = "/home/zhuxing/vega/analysis/main_reio.ini"
 # POLY_TXT = "/home/zhuxing/vega/Polychord_result/auto_reio_extendprior/Polychord_auto_extendprior.txt"
 # POLY_PARAMNAMES = "/home/zhuxing/vega/Polychord_result/auto_reio_extendprior/Polychord_auto_extendprior.paramnames"
 
-R_BINS = [(10, 40), (40, 70), (70, 100), (100, 180)]
+# # test
+# MAIN_INI = "/home/zhuxing/vega/analysis/main_fid.ini"
+# POLY_TXT = "/work/zhuxing/vega_result/Poly_r20_auto_fid.txt"
+# POLY_PARAMNAMES = "/work/zhuxing/vega_result/Poly_r20_auto_fid.paramnames"
 
+# R_BINS = [(10, 20), (20, 30), (30, 40), (40, 50), (50, 60), (60, 70), (70, 80), (80, 90), (90, 100), (100, 110), (110, 120), (120, 130), (130, 140), (140, 150), (150, 160), (160, 170), (170, 180)]
+R_BINS = [(20, 180)]
 
 def read_paramnames(path):
     names = []

@@ -11,8 +11,8 @@ def get_best_fit_row(filename):
     logL = -0.5 * data[best_idx, 1]
     return params, logL
 
-yukawa_params, yukawa_logL = get_best_fit_row('./lya_auto_yuk3_extendedprior/Polychord_auto_extendprior.txt')
-fiducial_params, fiducial_logL = get_best_fit_row('./lya_auto_fid/lyaxlya_lyaxlyb_s3.txt')
+yukawa_params, yukawa_logL = get_best_fit_row('/Users/zhengyifan/vega_result/40_180/auto_reio_40_180_3free/Poly_bbt_40_180_auto.txt')
+fiducial_params, fiducial_logL = get_best_fit_row('/Users/zhengyifan/vega_result/40_180/auto_fid_40_180/Poly_bbt_40_180_auto_fid.txt')
 
 
 print("For the auto Lya: \n")

@@ -11,7 +11,6 @@ import numpy as np
 
 from mcmc.script_mcmc_obs import load_pmpsi_from_chain
 from pmxh_shape_emulator import PMXHShapeEmulator
-from xhi_shape_emulator import XHIShapeEmulator
 
 from scipy import interpolate
 from scipy.integrate import quad
@@ -72,6 +71,9 @@ _PSI_Y_BY_Z = np.asarray(
 )
 _PSI_TCKS = tuple(interpolate.splrep(_PSI_X, _PSI_Y_BY_Z[i], k=1, s=0) for i in range(_PSI_Z_NODES.size))
 
+_MANUAL_PRIOR_ZETA = np.asarray([15.455066, 36.072697, 50.0, 100.0, 150.0, 250.0], dtype=float)
+_MANUAL_PRIOR_LOGT = np.asarray([4.498625, 5.035638, 5.25529, 5.59915, 5.76, 5.925], dtype=float)
+
 
 def pmpsi_from_pmxh(
     *,
@@ -118,8 +120,8 @@ def pmpsi_from_pmxh(
     return pmpsi_mean, pmpsi_std
 
 @lru_cache(maxsize=None)
-# def growth_factor_calculation(z, Om=0.315094454725487, OL=0.684825913083526): #DESI's cosmology
-def growth_factor_calculation(z, Om=0.3088, OL=0.6912): #21cmFAST's cosmology
+def growth_factor_calculation(z, Om=0.315094454725487, OL=0.684825913083526): #DESI's cosmology
+# def growth_factor_calculation(z, Om=0.3088, OL=0.6912): #21cmFAST's cosmology
     '''
     Implements eq. 7.77 from S. Dodelson's Modern Cosmology book
     '''
@@ -158,10 +160,40 @@ def _build_full_params(
     return p
 
 
+def _manual_prior_boundary_logt(zeta_uv: float) -> float:
+    zeta_uv = float(zeta_uv)
+    z0 = _MANUAL_PRIOR_ZETA
+    y0 = _MANUAL_PRIOR_LOGT
+
+    # Extend the first segment to the left down to zeta=10.
+    if zeta_uv <= float(z0[1]):
+        slope = (float(y0[1]) - float(y0[0])) / (float(z0[1]) - float(z0[0]))
+        return float(y0[0] + slope * (zeta_uv - float(z0[0])))
+
+    for i in range(1, z0.size - 1):
+        lo = float(z0[i])
+        hi = float(z0[i + 1])
+        if lo < zeta_uv <= hi:
+            slope = (float(y0[i + 1]) - float(y0[i])) / (hi - lo)
+            return float(y0[i] + slope * (zeta_uv - lo))
+
+    slope = (float(y0[-1]) - float(y0[-2])) / (float(z0[-1]) - float(z0[-2]))
+    return float(y0[-1] + slope * (zeta_uv - float(z0[-1])))
+
+
+def _custom_prior_status(*, zeta_uv: float, logtvir: float) -> str:
+    if float(logtvir) > _manual_prior_boundary_logt(float(zeta_uv)):
+        return "reject"
+    return "accept"
+
+
 def _log_prior(*, zeta_uv: float, tvir: float, zeta_min: float, zeta_max: float, tvir_min: float, tvir_max: float) -> float:
     if not (float(zeta_min) <= float(zeta_uv) <= float(zeta_max)):
         return float("-inf")
     if not (float(tvir_min) <= float(tvir) <= float(tvir_max)):
+        return float("-inf")
+    status = _custom_prior_status(zeta_uv=float(zeta_uv), logtvir=float(math.log10(float(tvir))))
+    if status == "reject":
         return float("-inf")
     return 0.0
 
@@ -178,6 +210,44 @@ def _log_likelihood_gaussian_diag(*, y_obs: np.ndarray, y_model: np.ndarray, sig
         return float("-inf")
     r = (y_obs - y_model) / sigma
     return float(-0.5 * np.sum(r * r + 2.0 * np.log(sigma)))
+
+
+def _log_likelihood_asymmetric_gaussian(
+    *,
+    y_obs: np.ndarray,
+    y_model: np.ndarray,
+    sigma_minus: np.ndarray,
+    sigma_plus: np.ndarray,
+    emu_std: np.ndarray | None = None,
+) -> float:
+    y_obs = np.asarray(y_obs, dtype=float)
+    y_model = np.asarray(y_model, dtype=float)
+    sigma_minus = np.asarray(sigma_minus, dtype=float)
+    sigma_plus = np.asarray(sigma_plus, dtype=float)
+    if y_obs.shape != y_model.shape or y_obs.shape != sigma_minus.shape or sigma_minus.shape != sigma_plus.shape:
+        raise ValueError("Shape mismatch for y_obs/y_model/sigma_minus/sigma_plus")
+    if emu_std is None:
+        emu2 = np.zeros_like(y_obs, dtype=float)
+    else:
+        emu_std_arr = np.asarray(emu_std, dtype=float)
+        if emu_std_arr.shape != y_obs.shape:
+            raise ValueError("Shape mismatch between emu_std and y_obs")
+        if np.any(~np.isfinite(emu_std_arr)):
+            return float("-inf")
+        emu2 = emu_std_arr * emu_std_arr
+    if np.any(~np.isfinite(y_obs)) or np.any(~np.isfinite(y_model)):
+        return float("-inf")
+    if np.any(~np.isfinite(sigma_minus)) or np.any(~np.isfinite(sigma_plus)):
+        return float("-inf")
+    if np.any(sigma_minus <= 0) or np.any(sigma_plus <= 0):
+        return float("-inf")
+    choose_plus = (y_model >= y_obs)
+    sigma_obs_choice = np.where(choose_plus, sigma_plus, sigma_minus)
+    sigma_tot = np.sqrt(sigma_obs_choice * sigma_obs_choice + emu2)
+    if np.any(~np.isfinite(sigma_tot)) or np.any(sigma_tot <= 0):
+        return float("-inf")
+    r = (y_obs - y_model) / sigma_tot
+    return float(-0.5 * np.sum(r * r + 2.0 * np.log(sigma_tot)))
 
 
 def _npz_scalar(npz, key: str):
@@ -345,6 +415,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             "k_obs",
             "pmpsi_obs",
             "pmpsi_sigma",
+            "pmpsi_sigma_minus",
+            "pmpsi_sigma_plus",
             "last_x",
             "last_logp",
             "n_total_steps",
@@ -400,6 +472,24 @@ def main(argv: Sequence[str] | None = None) -> None:
     k_obs = pmpsi["k"]
     pmpsi_obs = pmpsi["median"]
     pmpsi_sigma = pmpsi["sigma"]
+    pmpsi_sigma_minus = pmpsi.get("sigma_minus")
+    pmpsi_sigma_plus = pmpsi.get("sigma_plus")
+    if pmpsi_sigma_minus is None or pmpsi_sigma_plus is None:
+        pmpsi_sigma_minus = np.asarray(pmpsi_sigma, dtype=float).copy()
+        pmpsi_sigma_plus = np.asarray(pmpsi_sigma, dtype=float).copy()
+    else:
+        pmpsi_sigma_minus = np.asarray(pmpsi_sigma_minus, dtype=float)
+        pmpsi_sigma_plus = np.asarray(pmpsi_sigma_plus, dtype=float)
+    if pmpsi_sigma_minus.shape != pmpsi_obs.shape or pmpsi_sigma_plus.shape != pmpsi_obs.shape:
+        raise ValueError("pmpsi sigma_minus/sigma_plus shape mismatch pmpsi_obs")
+    bad_minus = ~np.isfinite(pmpsi_sigma_minus) | (pmpsi_sigma_minus <= 0)
+    bad_plus = ~np.isfinite(pmpsi_sigma_plus) | (pmpsi_sigma_plus <= 0)
+    if np.any(bad_minus | bad_plus):
+        fallback = np.asarray(pmpsi_sigma, dtype=float)
+        pmpsi_sigma_minus = np.where(bad_minus | ~np.isfinite(fallback) | (fallback <= 0), pmpsi_sigma_minus, fallback)
+        pmpsi_sigma_minus = np.where(np.isfinite(pmpsi_sigma_minus) & (pmpsi_sigma_minus > 0), pmpsi_sigma_minus, fallback)
+        pmpsi_sigma_plus = np.where(bad_plus | ~np.isfinite(fallback) | (fallback <= 0), pmpsi_sigma_plus, fallback)
+        pmpsi_sigma_plus = np.where(np.isfinite(pmpsi_sigma_plus) & (pmpsi_sigma_plus > 0), pmpsi_sigma_plus, fallback)
 
     if restart_path is not None:
         if not np.allclose(np.asarray(restart_npz["k_obs"], dtype=float), np.asarray(k_obs, dtype=float)):
@@ -408,8 +498,11 @@ def main(argv: Sequence[str] | None = None) -> None:
             raise ValueError("restart file pmpsi_obs does not match current pmpsi_obs")
         if not np.allclose(np.asarray(restart_npz["pmpsi_sigma"], dtype=float), np.asarray(pmpsi_sigma, dtype=float)):
             raise ValueError("restart file pmpsi_sigma does not match current pmpsi_sigma")
-
-    xhi_emu = XHIShapeEmulator.load(str(args.xhi_model))
+        if "pmpsi_sigma_minus" in restart_npz and "pmpsi_sigma_plus" in restart_npz:
+            if not np.allclose(np.asarray(restart_npz["pmpsi_sigma_minus"], dtype=float), np.asarray(pmpsi_sigma_minus, dtype=float), equal_nan=False):
+                raise ValueError("restart file pmpsi_sigma_minus does not match current pmpsi_sigma_minus")
+            if not np.allclose(np.asarray(restart_npz["pmpsi_sigma_plus"], dtype=float), np.asarray(pmpsi_sigma_plus, dtype=float), equal_nan=False):
+                raise ValueError("restart file pmpsi_sigma_plus does not match current pmpsi_sigma_plus")
 
     if args.base_params is None or len(args.base_params) == 0:
         base_params = np.median(np.asarray(emu.train_params, dtype=float), axis=0)
@@ -430,6 +523,7 @@ def main(argv: Sequence[str] | None = None) -> None:
 
     def log_post(x: np.ndarray) -> float:
         zeta_uv = float(x[0])
+        logtvir = float("nan")
         if bool(args.tvir_sample_log10):
             logtvir = float(x[1])
             if not (float(args.logtvir_min) <= logtvir <= float(args.logtvir_max)):
@@ -439,15 +533,17 @@ def main(argv: Sequence[str] | None = None) -> None:
             tvir = float(x[1])
             if not (float(args.tvir_min) <= tvir <= float(args.tvir_max)):
                 return float("-inf")
+            logtvir = float(math.log10(tvir))
 
-        lp = 0.0
-        if not (float(args.zeta_min) <= zeta_uv <= float(args.zeta_max)):
-            lp = float("-inf")
+        lp = _log_prior(
+            zeta_uv=zeta_uv,
+            tvir=tvir,
+            zeta_min=float(args.zeta_min),
+            zeta_max=float(args.zeta_max),
+            tvir_min=float(args.tvir_min),
+            tvir_max=float(args.tvir_max),
+        )
         if not math.isfinite(lp):
-            return float("-inf")
-
-        xhi_mean, _xhi_std = xhi_emu.predict(params=[zeta_uv, tvir], z=float(args.xhi_z))
-        if math.isfinite(xhi_mean) and xhi_mean > float(args.xhi_max):
             return float("-inf")
 
         full_params = _build_full_params(
@@ -471,11 +567,14 @@ def main(argv: Sequence[str] | None = None) -> None:
             z_select=float(args.z_select),
         )
 
-        sigma_tot = np.asarray(pmpsi_sigma, dtype=float)
-        if not bool(args.no_emu_std):
-            sigma_tot = np.sqrt(sigma_tot * sigma_tot + np.asarray(pmpsi_model_std, dtype=float) ** 2)
-
-        ll = _log_likelihood_gaussian_diag(y_obs=pmpsi_obs, y_model=pmpsi_model, sigma=sigma_tot)
+        emu_std_arg = (np.asarray(pmpsi_model_std, dtype=float) if not bool(args.no_emu_std) else None)
+        ll = _log_likelihood_asymmetric_gaussian(
+            y_obs=pmpsi_obs,
+            y_model=pmpsi_model,
+            sigma_minus=pmpsi_sigma_minus,
+            sigma_plus=pmpsi_sigma_plus,
+            emu_std=emu_std_arg,
+        )
         return float(lp + ll)
 
     out_path = Path(str(args.out))
@@ -528,6 +627,8 @@ def main(argv: Sequence[str] | None = None) -> None:
             k_obs=np.asarray(k_obs, dtype=float),
             pmpsi_obs=np.asarray(pmpsi_obs, dtype=float),
             pmpsi_sigma=np.asarray(pmpsi_sigma, dtype=float),
+            pmpsi_sigma_minus=np.asarray(pmpsi_sigma_minus, dtype=float),
+            pmpsi_sigma_plus=np.asarray(pmpsi_sigma_plus, dtype=float),
             pmpsi_chain_root=str(args.pmpsi_chain_root),
             ignore_rows=float(args.ignore_rows),
             emu_model=str(args.emu_model),

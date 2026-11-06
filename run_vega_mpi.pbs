@@ -1,6 +1,6 @@
-#PBS -N Polychord_lyalyb
+#PBS -N Poly_r20_3free_auto_new
 #PBS -V 
-#PBS -l select=1:ncpus=32:mem=512gb
+#PBS -l select=1:ncpus=128:mem=512gb
 #PBS -j oe
 
 cd $PBS_O_WORKDIR
@@ -19,4 +19,4 @@ conda activate vega
 module load gnu9
 module load mpich
 
-mpirun -np 32 python bin/run_vega_mpi.py main.ini
+mpirun -np 128 python bin/run_vega_mpi.py main.ini

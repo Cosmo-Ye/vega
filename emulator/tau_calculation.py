@@ -173,10 +173,13 @@ def build_argparser() -> argparse.ArgumentParser:
     p.add_argument("--z-max", type=float, default=float(z_max))
 
     p.add_argument("--xhi-file", default="mcmc/xhi_wholeband.txt")
+    p.add_argument("--xhi-file-2", default=None)
     p.add_argument("--xhi-col", choices=["low", "high", "center"], default="center")
+    p.add_argument("--label-1", default="DESI DR1")
+    p.add_argument("--label-2", default="DESI DR1 2")
     p.add_argument("--z-obs", type=float, default=None)
     p.add_argument("--tau-nz", type=int, default=600)
-    p.add_argument("--tau-out", default="mcmc/tau_curve.png")
+    p.add_argument("--tau-out", default="mcmc/tau_curve.pdf")
 
     p.add_argument("--xhi-model", default="xhi_shape_emulator.joblib")
     p.add_argument("--zeta", type=float, default=None)
@@ -257,28 +260,101 @@ def main(argv: Sequence[str] | None = None) -> None:
             nz_grid=int(args.nz_grid),
         )
 
-        tau_low = compute_tau_curve(xhi=xhi_low, z_grid=z_grid)
-        tau_high = compute_tau_curve(xhi=xhi_high, z_grid=z_grid)
-        tau_center = compute_tau_curve(xhi=xhi_center, z_grid=z_grid)
+        tau_low_1 = compute_tau_curve(xhi=xhi_low, z_grid=z_grid)
+        tau_high_1 = compute_tau_curve(xhi=xhi_high, z_grid=z_grid)
+        tau_center_1 = compute_tau_curve(xhi=xhi_center, z_grid=z_grid)
+
+        tau_low_2 = None
+        tau_high_2 = None
+        tau_center_2 = None
+        if args.xhi_file_2 is not None:
+            xhi_low_2 = get_xHI(
+                mode="file",
+                z_max_integral=z_obs,
+                xhi_file=str(args.xhi_file_2),
+                xhi_col="low",
+                xhi_model=str(args.xhi_model),
+                zeta=None,
+                tvir=None,
+                z_grid_min=float(args.z_grid_min),
+                z_grid_max=float(args.z_grid_max),
+                nz_grid=int(args.nz_grid),
+            )
+            xhi_high_2 = get_xHI(
+                mode="file",
+                z_max_integral=z_obs,
+                xhi_file=str(args.xhi_file_2),
+                xhi_col="high",
+                xhi_model=str(args.xhi_model),
+                zeta=None,
+                tvir=None,
+                z_grid_min=float(args.z_grid_min),
+                z_grid_max=float(args.z_grid_max),
+                nz_grid=int(args.nz_grid),
+            )
+            xhi_center_2 = get_xHI(
+                mode="file",
+                z_max_integral=z_obs,
+                xhi_file=str(args.xhi_file_2),
+                xhi_col="center",
+                xhi_model=str(args.xhi_model),
+                zeta=None,
+                tvir=None,
+                z_grid_min=float(args.z_grid_min),
+                z_grid_max=float(args.z_grid_max),
+                nz_grid=int(args.nz_grid),
+            )
+            tau_low_2 = compute_tau_curve(xhi=xhi_low_2, z_grid=z_grid)
+            tau_high_2 = compute_tau_curve(xhi=xhi_high_2, z_grid=z_grid)
+            tau_center_2 = compute_tau_curve(xhi=xhi_center_2, z_grid=z_grid)
+
+        lo1 = np.minimum(tau_low_1, tau_high_1)
+        hi1 = np.maximum(tau_low_1, tau_high_1)
+        c1 = float(tau_center_1[-1])
+        lo1_end = float(lo1[-1])
+        hi1_end = float(hi1[-1])
+        err1_low = c1 - lo1_end
+        err1_high = hi1_end - c1
+        print(f"[{args.label_1}] file={args.xhi_file}")
+        print(f"  tau(z={z_obs:.3f}) center = {c1:.8f}")
+        print(f"  tau low bound  = {lo1_end:.8f}")
+        print(f"  tau high bound = {hi1_end:.8f}")
+        print(f"  error (low)    = -{err1_low:.8f}")
+        print(f"  error (high)   = +{err1_high:.8f}")
+        print(f"  summary        = {c1:.6f} -{err1_low:.6f} +{err1_high:.6f}")
+        print()
+
+        if tau_center_2 is not None:
+            lo2 = np.minimum(tau_low_2, tau_high_2)
+            hi2 = np.maximum(tau_low_2, tau_high_2)
+            c2 = float(tau_center_2[-1])
+            lo2_end = float(lo2[-1])
+            hi2_end = float(hi2[-1])
+            err2_low = c2 - lo2_end
+            err2_high = hi2_end - c2
+            print(f"[{args.label_2}] file={args.xhi_file_2}")
+            print(f"  tau(z={z_obs:.3f}) center = {c2:.8f}")
+            print(f"  tau low bound  = {lo2_end:.8f}")
+            print(f"  tau high bound = {hi2_end:.8f}")
+            print(f"  error (low)    = -{err2_low:.8f}")
+            print(f"  error (high)   = +{err2_high:.8f}")
+            print(f"  summary        = {c2:.6f} -{err2_low:.6f} +{err2_high:.6f}")
+            print()
 
         import matplotlib
 
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
-        lo = np.minimum(tau_low, tau_high)
-        hi = np.maximum(tau_low, tau_high)
-
         plt.style.use('mcmc/perf.mplstyle')
         fig, ax = plt.subplots(figsize=(6.4, 4.4), dpi=160)
-        # ax.fill_between(z_grid, np.full_like(z_grid, 0.053), np.full_like(z_grid, 0.065), color="olive", alpha=0.20, linewidth=0.0, label="Pagano et al. 2020")
-        # ax.axhline(0.059, color='olive', ls="--", lw=1.6)
-        # ax.fill_between(z_grid, np.full_like(z_grid, 0.0572), np.full_like(z_grid, 0.068), color="cyan", alpha=0.20, linewidth=0.0, label="de Belsunce et al. 2021")
-        # ax.axhline(0.063, color='cyan', ls="--", lw=1.6)
         ax.fill_between(z_grid, np.full_like(z_grid, 0.052), np.full_like(z_grid, 0.064), color="red", alpha=0.20, linewidth=0.0, label="Planck PR4")
-        ax.axhline(0.058, color='orange', ls="--", lw=1.6)
-        ax.fill_between(z_grid, lo, hi, alpha=0.25, color="black", linewidth=0.0)
-        ax.plot(z_grid, tau_center, lw=2.0, color="black", label="DESI DR1")
+        ax.axhline(0.058, color='red', ls="--", lw=1.6)
+        ax.fill_between(z_grid, lo1, hi1, alpha=0.25, color="black", linewidth=0.0)
+        ax.plot(z_grid, tau_center_1, lw=2.0, color="black", label=str(args.label_1))
+        if tau_center_2 is not None:
+            ax.fill_between(z_grid, lo2, hi2, alpha=0.25, color="purple", linewidth=0.0)
+            ax.plot(z_grid, tau_center_2, lw=2.0, color="purple", ls="-.", label=str(args.label_2))
         ax.set_xlabel("z")
         ax.set_ylabel(r"$\tau(z)$")
         ax.set_xlim(0.0, z_obs)

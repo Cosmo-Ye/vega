@@ -70,7 +70,7 @@ def parse_args():
     parser.add_argument('--config1', type=str, default=None, help="Path to Vega config for chain1 (overrides --config for chain1)")
     parser.add_argument('--config2', type=str, default=None, help="Path to Vega config for chain2 (overrides --config for chain2)")
     parser.add_argument('--corr', type=str, default='lyaxlya', help="Correlation name to plot")
-    parser.add_argument('--plot-rmin', type=float, default=10.0, help="Model curve r-min for wedge")
+    parser.add_argument('--plot-rmin', type=float, default=40.0, help="Model curve r-min for wedge")
     parser.add_argument('--plot-rmax', type=float, default=180.0, help="Model curve r-max for wedge")
     return parser.parse_args()
 
@@ -603,10 +603,10 @@ def main():
     # Plotting setup
     plt.rcParams.update({'font.size': 14})
     plt.rcParams.update({'axes.titlesize': 18})
-    plt.rcParams.update({'axes.labelsize': 16})
-    plt.rcParams.update({'xtick.labelsize': 14})
-    plt.rcParams.update({'ytick.labelsize': 14})
-    plt.rcParams.update({'legend.fontsize': 16})
+    plt.rcParams.update({'axes.labelsize': 24})
+    plt.rcParams.update({'xtick.labelsize': 22})
+    plt.rcParams.update({'ytick.labelsize': 22})
+    plt.rcParams.update({'legend.fontsize': 20})
     plt.rcParams.update({'lines.linewidth': 2.5})
     
     mu_bins = [(0.95, 1.0), (0.8, 0.95), (0.5, 0.8), (0.0, 0.5)]
@@ -785,21 +785,34 @@ def main():
         if mode == 'wedge':
             ax.set_xlim(0, 200)
             ax.grid(linestyle=':', alpha=0.5)
+            fit_rmin = float(args.plot_rmin) if hasattr(args, "plot_rmin") else 0.0
+            fit_rmax = float(args.plot_rmax) if hasattr(args, "plot_rmax") else 200.0
+            fit_rmin = max(0.0, min(200.0, fit_rmin))
+            fit_rmax = max(0.0, min(200.0, fit_rmax))
+            if fit_rmin > 0:
+                ax.axvspan(0.0, fit_rmin, color="0.85", alpha=0.6, zorder=0)
+            if fit_rmax < 200:
+                ax.axvspan(fit_rmax, 200.0, color="0.85", alpha=0.6, zorder=0)
             smooth_sigma = 0.5
             y1 = gaussian_filter1d(wedge1, sigma=smooth_sigma) * r**2
             ax.plot(r, y1, '-', label='Without Reionization')
+            data_y = None
             if not using_mock_data1:
                 r_d, w_d, e_d = compute_wedge_with_errors(data_obj, (mu_min, mu_max), n_rp_out, True)
-                ax.errorbar(r_d, w_d * r_d**2, yerr=e_d * r_d**2, fmt='o', color='k', markersize=6, alpha=0.8, label='DESI DR1')
+                data_y = w_d * r_d**2
+                ax.errorbar(r_d, data_y, yerr=e_d * r_d**2, fmt='o', color='k', markersize=6, alpha=0.8, label='DESI DR1')
             if wedge2 is not None:
                 y2 = gaussian_filter1d(wedge2, sigma=smooth_sigma) * r**2
                 ax.plot(r, y2, ':', label='With Reionization')
-                y_min = min(np.min(y1), np.min(y2))
-                y_max = max(np.max(y1), np.max(y2))
+                y_min = np.nanmin([np.nanmin(y1), np.nanmin(y2)])
+                y_max = np.nanmax([np.nanmax(y1), np.nanmax(y2)])
             else:
-                y_min = np.min(y1)
-                y_max = np.max(y1)
-            pad = 0.05 * max(1e-12, (y_max - y_min))
+                y_min = np.nanmin(y1)
+                y_max = np.nanmax(y1)
+            if data_y is not None and data_y.size > 0:
+                y_min = min(float(y_min), float(np.nanmin(data_y)))
+                y_max = max(float(y_max), float(np.nanmax(data_y)))
+            pad = 0.08 * max(1e-12, (y_max - y_min))
             ax.set_ylim(y_min - pad, y_max + pad)
                 
             if i % 2 == 0:
@@ -811,7 +824,7 @@ def main():
                 ax.set_xlabel('r [Mpc/h]')
                 
         elif mode == 'compare':
-            ax.set_xlim(10, 180)
+            ax.set_xlim(0, 180)
             
             ratio = get_smooth_ratio(wedge1, wedge2, r)
             
@@ -839,10 +852,11 @@ def main():
                         rmax = np.nanmax([np.nanmax(rc) for rc in ratio_curves_one])
                         ylo = _round_down_strict(rmin, 0.05)
                         yhi = _round_up_strict(rmax, 0.05)
-                        ax.set_ylim(ylo, yhi)
+                        # ax.set_ylim(ylo, yhi)
+                        ax.set_ylim(0.80, 1.15)
                     except Exception:
                         pass
-                    ax.legend(frameon=False)
+                    # ax.legend(frameon=False)
 
     if not (mode == 'compare' and args.one):
         plt.subplots_adjust(hspace=0.13, wspace=0.1)

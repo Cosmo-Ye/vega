@@ -22,7 +22,7 @@ bias_QSO                        0.0        10.0         0.1
 beta_QSO                        0.0         5.0         0.1
 bias_hcd                       -0.2         0.0         0.01
 beta_hcd                        0.0         5.0         0.1
-L0_hcd                          0.0        40.0         0.1
+L0_hcd                          0.0        10.0         0.1
 L0_fvoigt                       0.0        40.0         0.1
 L0_sinc                         0.0        40.0         0.1
 sigmaNL_par                     0.0        20.0         0.1
@@ -46,3 +46,6 @@ bias_SiIII(1207)                -0.5        0.0         0.001
 bias_SiII(1260)                 -0.5        0.0         0.001
 bias_CIV(eff)                   -0.5        0.0         0.001
 desi_inst_sys_amp               0.0         1e-2         5e-5
+yuk_beta                        0.0         10.0         0.2
+yuk_A                           0.0         10.0         0.4
+yuk_alpha                       0.0         10.0         5.0

@@ -1,4 +1,4 @@
-#PBS -N simplelyalya
+#PBS -N ktest_kmin007
 #PBS -V 
 #PBS -l select=1:ncpus=32:mem=512gb
 #PBS -j oe
