@@ -105,7 +105,7 @@ python error_pmxh.py \
 
 ### Run MCMC and infer reionization timeline
 
-After verifying the emulators, you can run the MCMC with them, to get the posterior distribution of (zeta_UV, Tvir). In **run_mcmc.py**, the sampled point (zeta_UV, Tvir) will be transformed into P_m,xHI by emulator, then into P_m,psi^emu, to calculate the likelihood by comparing with the P_m,psi^obs $P_{m,\psi}$ obtained by the yukawa parameters from Polychord runs.
+After verifying the emulators, you can run the MCMC with them, to get the posterior distribution of (zeta_UV, Tvir). In **run_mcmc.py**, the sampled point (zeta_UV, Tvir) will be transformed into P_m,xHI by emulator, then into P_m,psi^emu, to calculate the likelihood by comparing with the P_m,psi^obs obtained by the yukawa parameters from Polychord runs.
 
 
 
