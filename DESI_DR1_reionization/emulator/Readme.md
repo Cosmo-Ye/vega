@@ -105,7 +105,29 @@ python error_pmxh.py \
 
 ### Run MCMC and infer reionization timeline
 
-After verifying the emulators, you can run the MCMC with them, to get the posterior distribution of (zeta_UV, Tvir). In **run_mcmc.py**, the sampled point (zeta_UV, Tvir) will be transformed into P_m,xHI by emulator, then into P_m,psi^emu, to calculate the likelihood by comparing with the P_m,psi^obs obtained by the yukawa parameters from Polychord runs.
+After verifying the emulators, you can run the MCMC with them, to get the posterior distribution of (zeta_UV, Tvir). Find the scripts in **emulator/mcmc** directory. In **run_mcmc.py**, the sampled point (zeta_UV, Tvir) will be transformed into P_m,xHI by emulator, then into P_m,psi^emu, to calculate the likelihood by comparing with the P_m,psi^obs obtained by the yukawa parameters from Polychord runs. To call **run_mcmc.py**, you need to provide a Polychord chain as input, and decide how much of the chain you want to ignore. Just keep `--ignore-rows` as 0 since every point of Polychord chain has its weight. And you as need to provide your trained emulator model as the input for `--emu-model`. Then you have to set the prior range for zeta_UV and Tvir, notice that you can set prior for log10Tvir with `--tvir-sample-log10` on. After setting the length of MCMC chain, the burn-in length, the thin rate, the seed, the initial point and the step length, you can run your MCMC chain. Following the example command:
+```bash
+python -m mcmc/run_mcmc.py \
+  --pmpsi-chain-root mcmc/Polychord_result/full_reio_extendprior/Polychord_fullcombined_extendprior \
+  --ignore-rows 0 \
+  --emu-model pmxh_shape_emulator.joblib \
+  --zeta-idx 0 \
+  --tvir-idx 1 \
+  --tvir-sample-log10 \
+  --zeta-min 10 --zeta-max 40 \
+  --logtvir-min 4 --logtvir-max 5 \
+  --z-select 2.33 \
+  --nsteps 2000000 --burn 40000 --thin 1 \
+  --seed 427 \
+  --zeta-init 35 --logtvir-init 4.25 \
+  --zeta-step 1 --logtvir-step 0.01 \
+  --out mcmc/yourchain.npz
+```
+**script_mcmc_obs.py** is an assistant script which can extract yukawa parameter values from the Polychord chain, and transform into the observational constraint on P_m,psi, providing the input for MCMC.
+
+The MCMC chain is written in segments, every time 5000 points will be appended to the chain, and you can download the chain at any time to check it. 
+
+
 
 
 
