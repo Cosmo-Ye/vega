@@ -92,6 +92,8 @@ python error_xHI.py \
   --test-glob 'xH_concat_emu_*' \
   --test-sobol sobol_inner.txt \
   --out-dir error_plot
+```
+```
 python error_pmxh.py \
   --model pmxh_shape_emulator.joblib \
   --test-dir test_data/cross \
@@ -100,6 +102,10 @@ python error_pmxh.py \
   --out-dir error_plot
 ```
 
+
+### Run MCMC and infer reionization timeline
+
+After verifying the emulators, you can run the MCMC with them, to get the posterior distribution of (zeta_UV, Tvir). In **run_mcmc.py**, the sampled point (zeta_UV, Tvir) will be transformed into P_m,xHI by emulator, then into P_m,psi^emu, to calculate the likelihood by comparing with the P_m,psi^obs $P_{m,\psi}$ obtained by the yukawa parameters from Polychord runs.
 
 
 
