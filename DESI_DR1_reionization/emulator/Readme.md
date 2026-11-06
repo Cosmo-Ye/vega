@@ -125,7 +125,24 @@ python -m mcmc/run_mcmc.py \
 ```
 **script_mcmc_obs.py** is an assistant script which can extract yukawa parameter values from the Polychord chain, and transform into the observational constraint on P_m,psi, providing the input for MCMC.
 
-The MCMC chain is written in segments, every time 5000 points will be appended to the chain, and you can download the chain at any time to check it. 
+The MCMC chain is written in segments, every time 5000 points will be appended to the chain, and you can download the chain at any time to check it. Begin the simplest check with **check_point.py**, which can help you check whether a given point (zeta_UV, Tvir) will be accepted by the MCMC and why, since we have set different standards and you may want to know why a point is accepted or rejected. Use **inspect_pmpsi_from_chain.py** to draw the P_m,psi(z) curve for a point of chain, with 4 modes **last**, **first**, **random**, **best** for `--pick`, comparing with the observational result of Polychord chain.
+
+Use **check_chain.py** to read one or more .npz MCMC chains, calculate quantiles, lag correlation ESS, integrate autocorrelation time and generate trajectory maps and two-dimensional posterior contour maps. Example command is:
+```bash
+python mcmc/check_chain.py --in mcmc/10_auto_1.npz mcmc/10_auto_2.npz mcmc/10_auto_3.npz mcmc/10_auto_4.npz
+```
+You can also turn on the arguments `--show-train-points` and `--show-prior-boundary` to show the training dataset and prior boundary in the contour plot.
+
+**diagnose_convergence.py** is a convergence check script for more biased numerical diagnosis, supporting multi chain R-hat, split R-hat, and single chain block approximation diagnosis.
+
+After you get convergent MCMC chains, you can use **xhi_band_from_chain.py** to transform your MCMC chains into a series of reionization timelines with xHI emulator, calculate the 16/50/84 quantiles on the redshift z-grid, and generate the entire xHI(z) posterior band text file.
+```bash
+python -m mcmc.xhi_band_from_chain \
+  --chains mcmc/auto_10_3free_0.npz mcmc/auto_10_3free_1.npz mcmc/auto_10_3free_2.npz mcmc/auto_10_3free_3.npz \
+  --nprocs 8 --chunk-size 256 \
+  --out-txt mcmc/xhi_auto_10_3free.txt
+```
+Then directly call **histories.py** to get your reionization timeline plot, with the input xHI(z) posterior band text file hard coded, and several individual constraints on xHI are stored in the script too.
 
 
 
