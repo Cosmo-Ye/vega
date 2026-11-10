@@ -11,6 +11,7 @@ Vega
 .. image:: https://codecov.io/gh/andreicuceu/Vega/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/andreicuceu/Vega
 
+Yifan's fork of Vega. See DESI_DR1_reionization folder for our project-related scripts.
 
 Vega is a tool for computing 3D correlation function models for tracers used by the Ly-α forest group (such as Ly-α flux, Quasar positions or different metal lines) and for fitting data produced by `picca <https://github.com/igmhub/picca>`__ primarily to measure Baryon Acoustic Oscillations (BAO).
 
