@@ -6,4 +6,4 @@ The directory **analysis** is created to visualize and analyze the results of Ve
 
 The directory **emulator** is created to do the inference of reionization timeline based on the Vega runs.
 
-Besides, here are several config files and job scripts which are used to run the key steps of workflow on the cluster.
+Besides, here are several config files (the ***.ini** files) and job scripts (the ***.pbs** files) which are used to run the key steps of workflow on the cluster.
