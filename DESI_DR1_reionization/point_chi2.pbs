@@ -1,0 +1,22 @@
+#PBS -N point_chi2
+#PBS -V 
+#PBS -l select=1:ncpus=32:mem=512gb
+#PBS -j oe
+
+
+# 作业开始后，PBS 将在一个新工作目录运行，通常是 $PBS_O_WORKDIR
+cd "$PBS_O_WORKDIR"
+
+module load python3/3.11
+
+# 加载环境（依你的 Shell 与集群配置）
+source ~/.bashrc
+conda activate vega
+
+# 运行你的处理脚本或 picca 工具
+# python analysis/point_chi2.py --chain-fid Polychord_result/auto_40_fid_bf --chain-reio Polychord_result/auto_40_reio_bf --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr lyaxlya --plot-rmin 40 --plot-rmax 180 --top-k 6 --use-mean --zoom
+# python analysis/point_chi2.py --chain-fid Polychord_result/auto_40_fid_bf --chain-reio Polychord_result/auto_40_reio_bf --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr lyaxlyb --plot-rmin 40 --plot-rmax 180 --top-k 1 --use-mean --zoom --inset-w 0.45 --legend-wedge 2
+# python analysis/point_chi2.py --chain-fid Polychord_result/full_fid_nv --chain-reio Polychord_result/full_reio_ep_nv --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr lyaxlya --plot-rmin 10 --plot-rmax 180 --top-k 9 --use-mean --zoom --zoom-top5 --inset-x 0.2 --inset-w 0.30 --inset2-x 0.56 --inset2-w 0.42
+python analysis/point_chi2.py --chain-fid Polychord_result/full_fid_nv --chain-reio Polychord_result/full_reio_ep_nv --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr qsoxlya --plot-rmin 10 --plot-rmax 180 --top-k 7 --use-mean --zoom --zoom-top5 --inset-x 0.2 --inset-y 0.05 --inset-w 0.35 --inset2-x 0.61 --inset2-y 0.05 --inset2-w 0.35
+# python analysis/point_chi2.py --chain-fid Polychord_result/full_fid_nv --chain-reio Polychord_result/full_reio_ep_nv --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr qsoxlyb --plot-rmin 10 --plot-rmax 180 --top-k 15 --use-mean
+# python analysis/point_chi2.py --chain-fid Polychord_result/full_fid_nv --chain-reio Polychord_result/full_reio_ep_nv --config-fid analysis/main_fid.ini --config-reio analysis/main_reio.ini --corr qsoxlya --plot-rmin 10 --plot-rmax 180 --top-k 7 --use-mean --zoom --zoom-top5 --inset-x 0.06 --inset-y 0.62 --inset-w 0.48 --inset2-x 0.61 --inset2-y 0.05 --inset2-w 0.35
